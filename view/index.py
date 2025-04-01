@@ -9,6 +9,8 @@ pygame.mixer.init()
 correct_sound = pygame.mixer.Sound("forca/assets/sounds/correct.mp3")
 wrong_sound = pygame.mixer.Sound("forca/assets/sounds/wrong.mp3")
 repeated_sound = pygame.mixer.Sound("forca/assets/sounds/repeated.mp3")
+vitoria_sound = pygame.mixer.Sound("forca/assets/sounds/vitoria.mp3")
+derrota_sound = pygame.mixer.Sound("forca/assets/sounds/derrota.mp3")
 
 class Puppet:
     def __init__(self):
@@ -91,7 +93,12 @@ class Game():
             "Animais": ["cachorro", "gato", "elefante", "tigre", "leão"],
             "Cores": ["vermelho", "azul", "verde", "amarelo", "roxo"],
             "Países": ["brasil", "canadá", "japão", "alemanha", "frança"],
-            "Esportes": ["futebol", "basquete", "vôlei", "tênis", "natação"]
+            "Esportes": ["futebol", "basquete", "vôlei", "tênis", "natação"],
+            "Profissões": ["médico", "engenheiro", "professor", "advogado", "arquiteto", "bombeiro", "policial", "dentista", "veterinário", "cientista"],
+            "Comidas": ["pizza", "hambúrguer", "sushi", "lasanha", "churrasco", "tacos", "macarrão", "risoto", "sopa", "salada"],
+            "Tecnologia": ["computador", "celular", "internet", "software", "hardware", "robô", "inteligência", "algoritmo", "rede", "dados"],
+            "Filmes": ["avatar", "titanic", "inception", "matrix", "gladiador", "coringa", "interestelar", "vingadores", "batman", "aladdin"],
+            "Músicas": ["rock", "pop", "jazz", "blues", "samba", "reggae", "funk", "rap", "sertanejo", "clássica"]
         }
         self.currentTheme, word_list = random.choice(list(self.words.items()))
         self.word = random.choice(word_list)
@@ -177,6 +184,8 @@ class Game():
             print("=" * size)
             print(f"  {msg}  ")
             print("=" * size)
+            # play victory sound
+            vitoria_sound.play()
             self.pannel = self.resetPannel()
             self.resetBodyParts()  # Reset the puppet
             self.guessedLetters.clear()  # Clear guessed letters
@@ -190,6 +199,8 @@ class Game():
         print(f"  {msg}  ")
         print("=" * size)
         print(f"A palavra era: {self.word}")  # Reveal the correct word
+        # Play loss sound
+        derrota_sound.play()
         self.pannel = self.resetPannel()  # Reset the panel
         self.resetBodyParts()  # Reset the puppet
         self.guessedLetters.clear()  # Clear guessed letters
@@ -302,14 +313,15 @@ class ForkRope(pygame.sprite.Sprite):
         super().__init__()
         # Load the rope image
         self.image = pygame.image.load("forca/assets/forca/metade da corda.png").convert_alpha()
+        self.image = pygame.transform.scale(self.image, (self.image.get_width() // 1.05, self.image.get_height() // 1.05))  # Scale down by 50%
         self.rect = self.image.get_rect()
         # Position the rope
         self.rect.center = (x, y)
         self.image = pygame.transform.scale(self.image, (self.rect.width, self.rect.height))
 
 completeFork = pygame.sprite.Group()
-completeFork.add(ForkWood(150, 450))
-completeFork.add(ForkRope(230, 450))    
+completeFork.add(ForkWood(150, 400))
+completeFork.add(ForkRope(230, 400))    
 
 class BodyPart(pygame.sprite.Sprite):
     def __init__(self, x, y, path):
@@ -322,12 +334,21 @@ class BodyPart(pygame.sprite.Sprite):
 # Adicionando os sprites na array de bodyPartSprites
 for key, value in puppetInstance_.bodyParts.items():
   print(value)
-  _ = BodyPart(230, 570, value["asset"])
+  _ = BodyPart(230, 520, value["asset"])
   value["sprite"]  = _
+
+class WoodBoard(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.image.load("forca/assets/forca/plataforma de madeira.png").convert_alpha()
+        self.image = pygame.transform.scale(self.image, (self.image.get_width() * 1, self.image.get_height() * 1))  # Scale up by 50%
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
 
 screenStuff = pygame.sprite.Group()
 screenStuff.add(Background())
 screenStuff.add(completeFork)  # Add the puppet group to the screenStuff group
+screenStuff.add(WoodBoard(500, 500))  # Add the wood board to the screenStuff group
 
 # ADDS THE PANEL IN THE SCREEN
 
@@ -356,13 +377,6 @@ screenStuff.draw(screen)
 wordPanelGroup = pygame.sprite.Group()
 wordPanelGroup.add(wordPanel)
 
-# Game loop
-
-
-
-gameInstance.startGame()
-
-
 def showHint(screen, fontSmall, hint):
     """Displays the hint (theme) at the top of the screen with a border."""
     hint_text = renderTextWithBorder(fontSmall, f"Dica: {hint}", (255, 255, 255), (0, 0, 0))  # White text with black border
@@ -380,6 +394,17 @@ def showStartScreen(screen, font):
 
     # Update the display
     pygame.display.flip()
+
+    waiting = True
+    while waiting:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    waiting = False  # Start the game
+            
 
 def showPlayAgainScreen(screen, font, message):
     """Displays the play again screen with a message and a border."""
@@ -411,9 +436,13 @@ def showPlayAgainScreen(screen, font, message):
                 elif event.key == pygame.K_ESCAPE:  # Quit the game
                     pygame.quit()
                     exit()
+        print
     gameInstance.startGame()  # Restart the game
 
 # Example of adding themes and words
+
+showStartScreen(screen, font)
+gameInstance.startGame()  # Start the game
 
 run = True
 while run:
@@ -440,6 +469,9 @@ while run:
     # Draw ForkWood last to ensure it is in front
     for sprite in completeFork:
         if isinstance(sprite, ForkRope):
+            screen.blit(sprite.image, sprite.rect)
+    for sprite in screenStuff:
+        if isinstance(sprite, WoodBoard):
             screen.blit(sprite.image, sprite.rect)
 
     # Event handler
