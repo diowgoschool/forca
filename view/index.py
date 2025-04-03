@@ -189,7 +189,7 @@ class Game():
             self.pannel = self.resetPannel()
             self.resetBodyParts()  # Reset the puppet
             self.guessedLetters.clear()  # Clear guessed letters
-            showPlayAgainScreen(screen, font, msg)  # Show the play again screen
+            showPlayAgainScreen(screen, font, msg, self.word)  # Show the play again screen with the correct word
 
     def handleLoss(self):
         """Handles the loss condition."""
@@ -204,7 +204,7 @@ class Game():
         self.pannel = self.resetPannel()  # Reset the panel
         self.resetBodyParts()  # Reset the puppet
         self.guessedLetters.clear()  # Clear guessed letters
-        showPlayAgainScreen(screen, font, msg)  # Show the play again screen
+        showPlayAgainScreen(screen, font, msg, self.word)  # Show the play again screen with the correct word
 
     def checkGameOver(self):
         """Checks if the game is over due to loss."""
@@ -406,18 +406,23 @@ def showStartScreen(screen, font):
                     waiting = False  # Start the game
             
 
-def showPlayAgainScreen(screen, font, message):
-    """Displays the play again screen with a message and a border."""
+def showPlayAgainScreen(screen, font, message, correct_word):
+    """Displays the play again screen with a message and the correct word."""
     screen.fill("black")  # Fill the screen with black
 
     # Render the end game message
     end_text = renderTextWithBorder(font, message, (255, 255, 255), (0, 0, 0))  # White text with black border
-    end_rect = end_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 50))
+    end_rect = end_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 100))
     screen.blit(end_text, end_rect)
+
+    # Render the correct word
+    word_text = renderTextWithBorder(fontSmall, f"A palavra era: {correct_word}", (255, 255, 255), (0, 0, 0))
+    word_rect = word_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
+    screen.blit(word_text, word_rect)
 
     # Render the "Play Again" instruction
     play_again_text = renderTextWithBorder(fontSmall, "Pressione espaço para jogar novamente ou ESC para sair.", (255, 255, 255), (0, 0, 0))
-    play_again_rect = play_again_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 50))
+    play_again_rect = play_again_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 100))
     screen.blit(play_again_text, play_again_rect)
 
     # Update the display
@@ -436,7 +441,6 @@ def showPlayAgainScreen(screen, font, message):
                 elif event.key == pygame.K_ESCAPE:  # Quit the game
                     pygame.quit()
                     exit()
-        print
     gameInstance.startGame()  # Restart the game
 
 # Example of adding themes and words
